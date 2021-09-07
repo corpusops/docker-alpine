@@ -233,7 +233,7 @@ SKIP_OS="(((archlinux|suse|centos|fedora|redhat|alpine|debian|ubuntu|oldstable|o
 SKIP_OS="$SKIP_OS|((node):[0-9]+[0-9]+\.[0-9]+.*)"
 SKIP_OS="$SKIP_OS|((debian|redis):[0-9]+\.[0-9]+.*)"
 SKIP_OS="$SKIP_OS|(centos:.\..\.....|centos.\..\.....)"
-SKIP_OS="$SKIP_OS|(alpine:.\.[0-9]+\.[0-9]+)"
+SKIP_OS="$SKIP_OS|(alpine:(2.6|2.7|.\.[0-9]+\.[0-9]+))"
 SKIP_OS="$SKIP_OS|(debian:(6.*|squeeze))"
 SKIP_OS="$SKIP_OS|(ubuntu:(([0-9][0-9]\.[0-9][0-9]\..*)|(14.10|12|10|11|13|15)))"
 SKIP_OS="$SKIP_OS|(lucid|maverick|natty|precise|quantal|raring|saucy)"
@@ -241,18 +241,19 @@ SKIP_OS="$SKIP_OS|(centos:(centos)?5)"
 SKIP_OS="$SKIP_OS|(fedora.*(modular|21))"
 SKIP_OS="$SKIP_OS|(traefik:((camembert|cancoillotte|cantal|chevrotin|faisselle|livarot|maroilles|montdor|morbier|picodon|raclette|reblochon|roquefort|tetedemoine)(-alpine)?|rc.*|(v?([0-9]+\.[0-9]+\.).*$)))"
 SKIP_OS="$SKIP_OS|(minio.*(armhf|aarch))"
-SKIP_PHP="(php:(5.4|5.3|.*(RC|-rc-).*))"
 SKIP_OS="$SKIP_OS)"
+SKIP_PHP="(php:(.*(RC|-rc-).*))"
 SKIP_WINDOWS="(.*(nanoserver|windows))"
 SKIP_MISC="(-?(on.?build)|pgrouting.*old)|seafile-mc:(7.0.1|7.0.2|7.0.3|7.0.4|7.0.5|7.1.3)|(dejavu:(v.*|1\..\.?.?|2\..\..)|3\.[1-3]\..|3.0.0|.*alpha.*$)"
 SKIP_NODE="((node):.*alpine3\..?.?)"
 SKIP_TF="(tensorflow.serving:[0-9].*)"
-SKIP_MINIO="(k8s-operator|((minio|mc):(RELEASE.)?[0-9]{4}-.{7}))"
+SKIP_MINIO="(k8s-operator|((minio\/mc):(RELEASE.)?[0-9]{4}-.{7}))"
 SKIP_MAILU="(mailu.*(feat|patch|merg|refactor|revert|upgrade|fix-|pr-template))"
 SKIP_DOCKER="docker(\/|:)([0-9]+\.[0-9]+\.|17|18.0[1-6]|1$|1(\.|-)).*"
-SKIPPED_TAGS="$SKIP_TF|$SKIP_MINOR_OS|$SKIP_NODE|$SKIP_DOCKER|$SKIP_MINIO|$SKIP_MAILU|$SKIP_MINOR_ES2|$SKIP_MINOR|$SKIP_PRE|$SKIP_OS|$SKIP_PHP|$SKIP_WINDOWS|$SKIP_MISC"
+SKIPPED_TAGS="$SKIP_MINOR_ES2|$SKIP_MAILU|$SKIP_MINOR|$SKIP_DOCKER|$SKIP_MINIO|$SKIP_TF|$SKIP_MINOR_OS|$SKIP_NODE|$SKIP_PRE|$SKIP_OS|$SKIP_PHP|$SKIP_WINDOWS|$SKIP_MISC"
 CURRENT_TS=$(date +%s)
-IMAGES_SKIP_NS="((mailhog|postgis|pgrouting(-bare)?|^library|dejavu|(minio/(minio|mc))))"
+IMAGES_SKIP_NS="(mailhog|postgis|pgrouting(-bare)?|^library|dejavu|minio/minio|minio/mc)"
+IMAGES_SKIP_NS=""
 
 
 default_images="
@@ -572,7 +573,9 @@ do_refresh_images() {
     while read images;do
         for image in $images;do
             if [[ -n $image ]];then
-                make_tags $image
+                if [[ -z "${SKIP_MAKE_TAGS-}" ]];then
+                    make_tags $image
+                fi
                 do_clean_tags $image
             fi
         done
@@ -822,6 +825,7 @@ load_batched_images() {
     local counter=0
     local default_batchsize=$1
     shift
+    local batched_images="$(echo $@ |xargs -n1)"
     for i in $@;do
         local imgs=${i//::*}
         local batchsize=$default_batchsize
@@ -834,7 +838,7 @@ load_batched_images() {
             local subimages=$(do_list_image $img)
             if [[ -z $subimages ]];then break;fi
             for j in $subimages;do
-                if ! ( is_in_images $j );then
+                if ! ( is_in_images $j ) && ( echo "$batched_images" | egrep -q "^$j$");then
                     local space=" "
                     if [ `expr $counter % $batchsize` = 0 ];then
                         space=""
