@@ -73,6 +73,9 @@ ADD rootfs/etc/logrotate.conf /etc/
 ADD rootfs/etc/logrotate.d/* /etc/logrotate.d/
 ADD helpers/*_clean.sh /tmp/corpusopssteroids/
 RUN sh -c 'set -ex \
+    && echo fixperms >&2 \
+    && ( chmod -vf g-wx,o-wx /etc/logrotate.d/* /etc/logrotate.conf || true ) \
+    && echo cleanup >&2 \
     && cd /tmp/corpusopssteroids \
     && chmod +x *sh \
     && _cops_SYSTEM=$(./system_detect.sh) \
