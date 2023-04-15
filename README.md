@@ -6,3 +6,4 @@
 | original   | wrapped  |
 |------------|-----------|
 | [library/alpine](https://hub.docker.com/_/alpine)                         | [corpusops/alpine](https://hub.docker.com/r/corpusops/alpine)                   |
+
