@@ -1,4 +1,4 @@
-FROM library/alpine:3.13
+FROM library/alpine:3.13 AS final
 ARG DO_UPDATE=y
 ARG NONINTERACTIVE=y
 ARG DEBIAN_FRONTEND=noninteractive
