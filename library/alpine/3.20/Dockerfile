@@ -1,6 +1,6 @@
-ARG ANCESTOR=library/alpine:3.15
+ARG ANCESTOR=library/alpine:3.20
 ARG RSYNC=corpusops/rsync
-FROM library/alpine:3.15 AS final
+FROM library/alpine:3.20 AS final
 ARG DO_UPDATE=y
 ARG NONINTERACTIVE=y
 ARG DEBIAN_FRONTEND=noninteractive
